@@ -789,8 +789,8 @@ body{
     </select>
 
     <input class="input" id="name" placeholder="이름">
-    <input class="input" id="birth" placeholder="생년월일 (예: 900101)">
-    <input class="input" id="phone" placeholder="전화번호">
+    <input class="input" id="birth" placeholder="생년월일 (예: 900101)" maxlength="6" inputmode="numeric">
+    <input class="input" id="phone" placeholder="전화번호" maxlength="13" inputmode="numeric">
 
     <select class="input" id="time">
       <option value="">연락 가능 시간</option>
@@ -908,44 +908,45 @@ body{
 
 <script>
 // 슬라이드
-let current=0;
-const slides=document.getElementById("slides");
-const dots=document.querySelectorAll(".dot");
+let current = 0;
+const slides = document.getElementById("slides");
+const dots = document.querySelectorAll(".dot");
 
-setInterval(()=>{
-  current=(current+1)%3;
-  slides.style.transform=`translateX(-${current*100}%)`;
-  dots.forEach(d=>d.classList.remove("active"));
+setInterval(function(){
+  current = (current + 1) % 3;
+  slides.style.transform = "translateX(-" + (current * 100) + "%)";
+  dots.forEach(function(d){ d.classList.remove("active"); });
   dots[current].classList.add("active");
-},3000);
+}, 3000);
 
-const names=[
-"김**","이**","박**","최**","정**","강**","조**","윤**","장**","임**",
-"한**","오**","서**","신**","권**","황**","안**","송**","류**","전**",
-"홍**","고**","문**","양**","손**","배**","백**","허**","유**","남**",
-"심**","노**","하**","곽**","성**","차**","주**","우**","구**","민**",
-"진**","엄**","채**","원**","천**","방**","공**","현**","함**","변**"
+// 최근 상담 접수 현황
+const names = [
+  "김**","이**","박**","최**","정**","강**","조**","윤**","장**","임**",
+  "한**","오**","서**","신**","권**","황**","안**","송**","류**","전**",
+  "홍**","고**","문**","양**","손**","배**","백**","허**","유**","남**",
+  "심**","노**","하**","곽**","성**","차**","주**","우**","구**","민**",
+  "진**","엄**","채**","원**","천**","방**","공**","현**","함**","변**"
 ];
 
-const amounts=[
-"100만원","200만원","300만원","500만원","700만원",
-"1000만원","1500만원","2000만원","3000만원","5000만원"
+const amounts = [
+  "100만원","200만원","300만원","500만원","700만원",
+  "1000만원","1500만원","2000만원","3000만원","5000만원"
 ];
 
-const status=[
-{text:"상담중",class:"wait"},
-{text:"신청완료",class:"ok"},
-{text:"상담완료",class:"done"}
+const status = [
+  {text:"상담중", class:"wait"},
+  {text:"신청완료", class:"ok"},
+  {text:"상담완료", class:"done"}
 ];
 
 function addItem(){
-  const name=names[Math.floor(Math.random()*names.length)];
-  const amount=amounts[Math.floor(Math.random()*amounts.length)];
-  const stat=status[Math.floor(Math.random()*status.length)];
+  const name = names[Math.floor(Math.random() * names.length)];
+  const amount = amounts[Math.floor(Math.random() * amounts.length)];
+  const stat = status[Math.floor(Math.random() * status.length)];
 
-  const div=document.createElement("div");
-  div.className="live-item";
-  div.innerHTML=`
+  const div = document.createElement("div");
+  div.className = "live-item";
+  div.innerHTML = `
     <div class="live-left">
       <div class="live-name">${name} 고객님</div>
       <div class="live-amount">${amount}</div>
@@ -955,121 +956,242 @@ function addItem(){
     </div>
   `;
 
-  const list=document.getElementById("list");
+  const list = document.getElementById("list");
   list.prepend(div);
 
-  if(list.children.length>5){
+  if(list.children.length > 5){
     list.removeChild(list.lastChild);
   }
 }
 
-for(let i=0;i<3;i++) addItem();
-setInterval(addItem,10000);
+for(let i = 0; i < 3; i++) addItem();
+setInterval(addItem, 10000);
+
+const SECRET = "dream_2026_lock";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxEVggIVTpQvKx8E0L5zDAfLoJLWB-bi6cGSHX_E1J2w_bjVn3uMttwaBTrW0b7x1HSQ/exec";
+
+const ALLOWED_GENDERS = ["남", "여"];
+const ALLOWED_TIMES = [
+  "09:00 ~ 10:00",
+  "10:00 ~ 11:00",
+  "11:00 ~ 12:00",
+  "12:00 ~ 13:00",
+  "13:00 ~ 14:00",
+  "14:00 ~ 15:00",
+  "15:00 ~ 16:00",
+  "16:00 ~ 17:00",
+  "17:00 ~ 18:00"
+];
+const ALLOWED_DELAY = ["유", "무"];
+const ALLOWED_AMOUNTS = [
+  "500만원 이하",
+  "500 ~ 1000만원",
+  "1000 ~ 3000만원",
+  "3000만원 이상"
+];
+const BLOCKED_TEST_NAMES = [
+  "TEST", "test", "Test", "테스트", "NoSecret", "WrongSecret", "EmptySecret", "checktest"
+];
+const BLOCKED_TEST_PHONES = [
+  "01000000000",
+  "01000010001",
+  "01000010002",
+  "01000010003",
+  "01000010009",
+  "01011111111",
+  "01012345678",
+  "01099999999"
+];
 
 let isSubmitting = false;
 
+function cleanText(value){
+  return String(value || "")
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/[<>]/g, "")
+    .replace(/javascript:/gi, "")
+    .replace(/onerror/gi, "")
+    .replace(/onload/gi, "")
+    .replace(/src=/gi, "")
+    .trim();
+}
+
+function normalizePhone(value){
+  return String(value || "").replace(/[^0-9]/g, "");
+}
+
+function todayKey(){
+  return new Date().toISOString().slice(0, 10);
+}
+
 function sendTelegram(){
+  const gender = cleanText(document.getElementById("gender").value);
+  const name = cleanText(document.getElementById("name").value);
+  const birth = cleanText(document.getElementById("birth").value);
+  const phone = cleanText(document.getElementById("phone").value);
+  const time = cleanText(document.getElementById("time").value);
+  const loanDelay = cleanText(document.getElementById("loanDelay").value);
+  const telDelay = cleanText(document.getElementById("telDelay").value);
+  const amount = cleanText(document.getElementById("amount").value);
+  const agree = document.getElementById("agree").checked;
+  const submitBtn = document.getElementById("submitBtn");
 
-const gender = document.getElementById("gender").value;
-const name = document.getElementById("name").value;
-const birth = document.getElementById("birth").value;
-const phone = document.getElementById("phone").value;
-const time = document.getElementById("time").value;
-const loanDelay = document.getElementById("loanDelay").value;
-const telDelay = document.getElementById("telDelay").value;
-const amount = document.getElementById("amount").value;
-const agree = document.getElementById("agree").checked;
+  const cleanPhone = normalizePhone(phone);
 
-if(!agree){
-  alert("개인정보 수집 및 이용에 동의해주세요.");
-  return;
+  if(!agree){
+    alert("개인정보 수집 및 이용에 동의해주세요.");
+    return;
+  }
+
+  if(!ALLOWED_GENDERS.includes(gender)){
+    alert("성별을 선택해주세요.");
+    return;
+  }
+
+  if(!/^[가-힣a-zA-Z\s]{2,15}$/.test(name)){
+    alert("이름을 정확히 입력해주세요.");
+    return;
+  }
+
+  if(BLOCKED_TEST_NAMES.includes(name)){
+    alert("정상적인 이름을 입력해주세요.");
+    return;
+  }
+
+  if(!/^\d{6}$/.test(birth)){
+    alert("생년월일은 숫자 6자리로 입력해주세요. 예: 900101");
+    return;
+  }
+
+  if(!/^010[0-9]{8}$/.test(cleanPhone)){
+    alert("전화번호를 010-0000-0000 형식으로 입력해주세요.");
+    return;
+  }
+
+  if(BLOCKED_TEST_PHONES.includes(cleanPhone)){
+    alert("정상적인 전화번호를 입력해주세요.");
+    return;
+  }
+
+  if(!ALLOWED_TIMES.includes(time)){
+    alert("연락 가능 시간을 선택해주세요.");
+    return;
+  }
+
+  if(!ALLOWED_DELAY.includes(loanDelay)){
+    alert("금융권 연체 여부를 선택해주세요.");
+    return;
+  }
+
+  if(!ALLOWED_DELAY.includes(telDelay)){
+    alert("통신 연체 여부를 선택해주세요.");
+    return;
+  }
+
+  if(!ALLOWED_AMOUNTS.includes(amount)){
+    alert("필요금액을 다시 선택해주세요.");
+    return;
+  }
+
+  const submitCounts = JSON.parse(localStorage.getItem("dreamSubmitCounts") || "{}");
+  const key = todayKey() + "_" + cleanPhone;
+  const currentCount = submitCounts[key] || 0;
+
+  if(currentCount >= 2){
+    alert("이미 2회 접수된 번호입니다. 상담 연락을 기다려주세요.");
+    return;
+  }
+
+  if(isSubmitting){
+    alert("이미 접수 처리 중입니다. 잠시만 기다려주세요.");
+    return;
+  }
+
+  isSubmitting = true;
+  submitBtn.disabled = true;
+  submitBtn.innerText = "접수 중...";
+
+  const formData = new URLSearchParams();
+  formData.append("secret", SECRET);
+  formData.append("referer", location.href);
+  formData.append("site", "dream");
+  formData.append("gender", gender);
+  formData.append("name", name);
+  formData.append("birth", birth);
+  formData.append("phone", phone);
+  formData.append("time", time);
+  formData.append("loanDelay", loanDelay);
+  formData.append("telDelay", telDelay);
+  formData.append("amount", amount);
+  formData.append("consult", "상품 안내 상담");
+
+  fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    body: formData
+  })
+  .then(function(res){
+    return res.text();
+  })
+  .then(function(result){
+    if(result !== "success"){
+      alert("접수가 제한되었습니다. 입력 정보를 다시 확인해주세요.");
+      throw new Error(result);
+    }
+
+    submitCounts[key] = currentCount + 1;
+    localStorage.setItem("dreamSubmitCounts", JSON.stringify(submitCounts));
+
+    if(typeof gtag === "function"){
+      gtag("event", "conversion", {
+        "send_to": "AW-18126831450/vxoPCLPmiLQcENr-xcND",
+        "value": 1.0,
+        "currency": "KRW"
+      });
+    }
+
+    alert("접수완료. 상담사 배정 후 연락드리겠습니다.");
+
+    document.getElementById("gender").value = "";
+    document.getElementById("name").value = "";
+    document.getElementById("birth").value = "";
+    document.getElementById("phone").value = "";
+    document.getElementById("time").value = "";
+    document.getElementById("loanDelay").value = "";
+    document.getElementById("telDelay").value = "";
+    document.getElementById("amount").selectedIndex = 0;
+    document.getElementById("agree").checked = true;
+  })
+  .catch(function(error){
+    console.log("submit error:", error);
+  })
+  .finally(function(){
+    isSubmitting = false;
+    submitBtn.disabled = false;
+    submitBtn.innerText = "상품 조건 확인하기";
+  });
 }
 
-if(!name || !phone){
-  alert("이름과 전화번호는 필수입니다.");
-  return;
-}
-
-if(!/^\d{6}$/.test(birth)){
-  alert("생년월일은 숫자 6자리로 입력해주세요.");
-  return;
-}
-
-if(!gender || !time || !loanDelay || !telDelay || amount === "필요금액 선택"){
-  alert("모든 항목을 선택해주세요.");
-  return;
-}
-
-/* 같은 번호 2회까지만 신청 가능 */
-const cleanPhone = phone.replace(/[^0-9]/g, '');
-
-const submitCounts = JSON.parse(localStorage.getItem("submitCounts") || "{}");
-
-const currentCount = submitCounts[cleanPhone] || 0;
-
-if(currentCount >= 2){
-  alert("이미 2회 접수된 번호입니다. 상담 연락을 기다려주세요.");
-  return;
-}
-
-/* 버튼 연속 클릭 방지 */
-if(isSubmitting){
-  alert("이미 접수 처리 중입니다. 잠시만 기다려주세요.");
-  return;
-}
-
-isSubmitting = true;
-const submitBtn = document.getElementById("submitBtn");
-submitBtn.disabled = true;
-submitBtn.innerText = "접수 중...";
-
-const SECRET = "dream_2026_lock";
-
-const url =
-  "https://script.google.com/macros/s/AKfycbxxEVggIVTpQvKx8E0L5zDAfLoJLWB-bi6cGSHX_E1J2w_bjVn3uMttwaBTrW0b7x1HSQ/exec"
-  + "?secret=" + SECRET
-  + "&referer=" + encodeURIComponent(location.href)
-  + "&gender=" + encodeURIComponent(gender)
-  + "&name=" + encodeURIComponent(name)
-  + "&birth=" + encodeURIComponent(birth)
-  + "&phone=" + encodeURIComponent(phone)
-  + "&time=" + encodeURIComponent(time)
-  + "&loanDelay=" + encodeURIComponent(loanDelay)
-  + "&telDelay=" + encodeURIComponent(telDelay)
-  + "&amount=" + encodeURIComponent(amount);
-
-fetch(url, {
-  method: "GET",
-  mode: "no-cors"
-})
-.then(()=>{
-  submitCounts[cleanPhone] = currentCount + 1;
-  localStorage.setItem("submitCounts", JSON.stringify(submitCounts));
-
-  alert("접수완료. 상담사 배정후 연락드리겠습니다.");
-
-  isSubmitting = false;
-  submitBtn.disabled = false;
-  submitBtn.innerText = "상품 조건 확인하기";
-})
-.catch(()=>{
-  alert("접수 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
-  isSubmitting = false;
-  submitBtn.disabled = false;
-  submitBtn.innerText = "상품 조건 확인하기";
+// 생년월일 숫자만 6자리
+const birthInput = document.getElementById("birth");
+birthInput.addEventListener("input", function(){
+  this.value = this.value.replace(/[^0-9]/g, "").slice(0, 6);
 });
-}
 
-document.getElementById("phone").addEventListener("input", function(){
-  let value = this.value.replace(/[^0-9]/g, '');
+// 전화번호 자동 하이픈 + 11자리 제한
+const phoneInput = document.getElementById("phone");
+phoneInput.addEventListener("input", function(){
+  let value = this.value.replace(/[^0-9]/g, "").slice(0, 11);
 
   if(value.length < 4){
     this.value = value;
   }else if(value.length < 8){
     this.value = value.replace(/(\d{3})(\d+)/, "$1-$2");
   }else{
-    this.value = value.replace(/(\d{3})(\d{4})(\d+)/, "$1-$2-$3");
+    this.value = value.replace(/(\d{3})(\d{4})(\d{0,4})/, "$1-$2-$3");
   }
+
+  this.value = this.value.slice(0, 13);
 });
 
 function openPolicy(type){
@@ -1135,7 +1257,6 @@ document.getElementById("policyModal").addEventListener("click", function(e){
     closePolicy();
   }
 });
-
 </script>
 
 </body>
