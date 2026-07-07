@@ -1128,17 +1128,10 @@ function sendTelegram(){
 
   fetch(APPS_SCRIPT_URL, {
     method: "POST",
+    mode: "no-cors",
     body: formData
   })
-  .then(function(res){
-    return res.text();
-  })
-  .then(function(result){
-    if(result !== "success"){
-      alert("접수가 제한되었습니다. 입력 정보를 다시 확인해주세요.");
-      throw new Error(result);
-    }
-
+  .then(function(){
     submitCounts[key] = currentCount + 1;
     localStorage.setItem("dreamSubmitCounts", JSON.stringify(submitCounts));
 
@@ -1164,6 +1157,7 @@ function sendTelegram(){
   })
   .catch(function(error){
     console.log("submit error:", error);
+    alert("접수 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
   })
   .finally(function(){
     isSubmitting = false;
