@@ -1022,17 +1022,6 @@ function addItem(){
 for(let i = 0; i < 3; i++) addItem();
 setInterval(addItem, 10000);
 
-/*
- * ============================================================
- * 보안 전송 설정
- * ============================================================
- *
- * 중요:
- * - HTML에는 비밀키를 절대로 넣지 않습니다.
- * - Apps Script URL도 HTML에서 직접 호출하지 않습니다.
- * - 브라우저 → Cloudflare Worker → Apps Script 순서로 전송합니다.
- * - 아래 WORKER_URL은 공개되어도 되는 주소입니다.
- */
 const WORKER_URL = "https://dream-secure-gateway.choemiseon696.workers.dev";
 
 const ALLOWED_GENDERS = ["남", "여"];
